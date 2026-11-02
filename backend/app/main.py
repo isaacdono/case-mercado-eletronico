@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -5,16 +6,23 @@ import uvicorn
 
 from app.db.session import Base, engine
 
-# IMPORTANTE: Ao importar os modelos aqui, o SQLAlchemy executa as classes
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Ao importar os modelos aqui, o SQLAlchemy executa as classes
 # que herdam de 'Base' e as registra automaticamente no catálogo 'Base.metadata'.
-# Sem esse import, o 'create_all' abaixo não saberia quais tabelas criar no PostgreSQL.
 import app.models
+
+from app.api.requisicoes import router as requisicoes_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Executado automaticamente no startup do container:
-    # Lê as tabelas registradas no 'Base.metadata' e executa o CREATE TABLE no PostgreSQL.
+    # Lê as tabelas do 'Base.metadata' e executa o CREATE TABLE no startup do container.
+    logger.info("Inicializando banco de dados e garantindo criação das tabelas...")
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -25,6 +33,8 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.include_router(requisicoes_router)
+
 
 @app.get("/health")
 def health_check():
@@ -33,5 +43,5 @@ def health_check():
 
 if __name__ == "__main__":
     # Lê a porta dinamicamente da variável de ambiente no Python
-    port = int(os.getenv("BACKEND_PORT", "8000"))
+    port = int(os.getenv("BACKEND_PORT"))
     uvicorn.run("app.main:app", host="0.0.0.0", port=port)

@@ -1,5 +1,7 @@
 from app.schemas.requisicao import (
     PedidoChatInput,
+    ItemEscolhido,
+    DecisaoAgente,
     ItemRequisicaoOut,
     RequisicaoOut,
     RespostaAgente,
@@ -7,6 +9,8 @@ from app.schemas.requisicao import (
 
 __all__ = [
     "PedidoChatInput",
+    "ItemEscolhido",
+    "DecisaoAgente",
     "ItemRequisicaoOut",
     "RequisicaoOut",
     "RespostaAgente",

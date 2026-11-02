@@ -3,10 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@postgres:5432/requisicoes_db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # cria o pool de conexões com o banco de dados
 engine = create_engine(DATABASE_URL)

@@ -9,23 +9,35 @@ class PedidoChatInput(BaseModel):
     mensagem: str
 
 
-class ItemRequisicaoOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class ItemEscolhido(BaseModel):
+    """Item selecionado pelo agente no catálogo."""
 
-    id: int
     produto_id: Optional[int] = None
     nome_produto: str
     preco_unitario: float
-    quantidade: int
-    subtotal: float
+    quantidade: int = 1
     categoria: Optional[str] = None
     descricao: Optional[str] = None
+
+
+class DecisaoAgente(BaseModel):
+    """Resposta estruturada final do agente."""
+
+    mensagem: str
+    itens: List[ItemEscolhido] = []
+
+
+class ItemRequisicaoOut(ItemEscolhido):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    subtotal: float
 
 
 class RequisicaoOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int 
+    id: int
     valor_total: float
     status: str
     criado_em: datetime
