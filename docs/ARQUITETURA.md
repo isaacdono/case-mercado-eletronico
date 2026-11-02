@@ -53,7 +53,7 @@ flowchart TD
 | :--- | :--- | :--- |
 | **Frontend** | React (Vite) | Interface de chat inspirada na identidade oficial do portal ME (`LoginNew`), com métricas e cards técnicos. |
 | **Backend** | Python + FastAPI + **uv** | Gerenciamento ultrarrápido com `uv`, API REST (`POST /requisicoes`, `GET /requisicoes`) e orquestração do agente. |
-| **Migrations** | Alembic + SQLAlchemy | Controle versionado e execução automática do schema no PostgreSQL na subida. |
+| **Banco de Dados** | PostgreSQL 16 + SQLAlchemy | Criação automática das tabelas no startup do backend (`Base.metadata.create_all`). |
 | **Servidor MCP** | Anthropic Python `mcp` SDK | Servidor isolado que expõe `buscar_produtos` e `detalhar_produto` consumindo a DummyJSON. |
 | **LLM Provider** | OpenRouter API | Modelo com capacidade nativa de *Tool Calling* / *Function Calling*. |
 | **Banco de Dados** | PostgreSQL 16 | Armazenamento relacional das requisições corporativas e seus itens. |

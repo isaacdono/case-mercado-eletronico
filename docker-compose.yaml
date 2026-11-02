@@ -1,0 +1,8 @@
+services:
+  mcp_server:
+    build: ./mcp_server
+    container_name: mcp_server
+    ports:
+      - "${MCP_PORT:-8001}:${MCP_PORT:-8001}"
+    env_file:
+      - .env
