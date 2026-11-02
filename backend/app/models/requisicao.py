@@ -29,6 +29,7 @@ class ItemRequisicao(Base):
     nome_produto = Column(String(200), nullable=False)
     categoria = Column(String(100), nullable=True)
     descricao = Column(Text, nullable=True)
+    frete = Column(String(150), nullable=True)
     preco_unitario = Column(Numeric(10, 2), nullable=False)
 
     quantidade = Column(Integer, nullable=False, default=1)

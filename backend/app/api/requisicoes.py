@@ -16,7 +16,7 @@ router = APIRouter(prefix="/requisicoes", tags=["Requisicoes"])
 @router.get("", response_model=List[RequisicaoOut])
 def listar_requisicoes(db: Session = Depends(get_db)):
     """Retorna todas as requisições salvas no PostgreSQL com seus itens."""
-    
+
     # joinedload faz um único SELECT com JOIN nos itens (evita o problema de N+1 queries)
     return (
         db.query(Requisicao)
@@ -27,14 +27,11 @@ def listar_requisicoes(db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=RespostaAgente)
-async def processar_pedido_chat(
-    pedido: PedidoChatInput,
-    db: Session = Depends(get_db)  # Injeta a sessão do banco criada pelo get_db()
-):
+async def processar_pedido_chat(pedido: PedidoChatInput, db: Session = Depends(get_db)):  # Injeta a sessão do banco criada pelo get_db()
     """Aciona o agente autônomo e registra a requisição caso aprovada."""
 
     try:
-        decisao = await executar_agente(pedido.mensagem)
+        decisao = await executar_agente(pedido.mensagem, pedido.historico)
 
         if not decisao.itens:
             logger.info("Nenhuma requisição gerada para o pedido.")

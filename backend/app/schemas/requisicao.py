@@ -3,10 +3,18 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 
+class MensagemHistorico(BaseModel):
+    """Mensagem anterior da conversa para manter contexto."""
+
+    role: str
+    content: str
+
+
 class PedidoChatInput(BaseModel):
-    """Mensagem digitada pela pessoa no chat."""
+    """Mensagem digitada pela pessoa no chat com histórico da conversa."""
 
     mensagem: str
+    historico: List[MensagemHistorico] = []
 
 
 class ItemEscolhido(BaseModel):
@@ -18,6 +26,7 @@ class ItemEscolhido(BaseModel):
     quantidade: int = 1
     categoria: Optional[str] = None
     descricao: Optional[str] = None
+    frete: Optional[str] = None
 
 
 class DecisaoAgente(BaseModel):
