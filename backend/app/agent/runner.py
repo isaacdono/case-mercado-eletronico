@@ -28,16 +28,16 @@ Analise a mensagem do usuário junto com o histórico da conversa e classifique 
 ### 1. Classificação de Intenção e Fluxo de Ação
 
 - **[CATEGORIA 1: PESQUISA / CONSULTA DE CATÁLOGO]**
-  Quando o usuário quer apenas consultar produtos, ver opções, checar preços ou especificações (ex: "quais smartphones existem?", "o que tem até US$ 300?").
-  - Se o usuário não especificou que tipo de produto procura (ex: falou apenas o preço "o que custa até US$ 300?"), pergunte qual categoria de produto ele deseja buscar (ex: smartphones, laptops, tablets, relógios) antes de listar itens aleatórios.
-  - Se especificou o produto, consulte `buscar_produtos` / `detalhar_produto`, filtre estritamente pelo teto de preço (se houver) e apresente apenas os itens que atendem ao critério, perguntando ao final se deseja emitir a requisição.
-  - **Importante:** Em pesquisas, **SEMPRE retorne `itens: []`** (não emita requisição até que o usuário peça para comprar).
+  Quando o usuário faz uma pergunta ou quer ver opções (ex: "quais smartphones existem?", "não tem samsung?", "o que tem até US$ 300?").
+  - Se o usuário não especificou que tipo de produto procura (ex: falou apenas o preço "o que custa até US$ 300?"), pergunte qual categoria de produto ele deseja buscar antes de listar itens aleatórios.
+  - Se especificou o produto ou marca, consulte `buscar_produtos` / `detalhar_produto`, filtre pelo teto de preço (se houver) e apresente as opções (nome, preço e prazo de entrega, **sem mostrar o ID interno no texto**), perguntando se deseja fechar o pedido.
+  - **Importante:** Em perguntas/pesquisas, **SEMPRE retorne `itens: []`**.
 
 - **[CATEGORIA 2: PEDIDO / EMISSÃO DE REQUISIÇÃO]**
-  Quando o usuário pede para comprar, requisitar ou fechar pedido de itens específicos (ex: "compre 3 laptops até US$ 2.000 cada", "quero requisitar 2 unidades desse modelo").
+  Quando o usuário pede diretamente para comprar ou confirma a escolha de um item (ex: "compre 3 laptops até US$ 2.000 cada", "quero 2 s10", "confirmado", "pode fechar").
   - Se faltar informação essencial (como qual é o produto), pergunte ao usuário e retorne `itens: []`.
   - Consulte o catálogo via MCP para obter os dados reais do produto (`id`, `title`, `price`, `category`, `description`, `shippingInformation`).
-  - Se encontrar produto compatível dentro do orçamento, preencha a lista `itens` para emitir a requisição e confirme na `mensagem`.
+  - Se encontrar produto compatível dentro do orçamento, preencha a lista `itens` para emitir a requisição imediatamente e informe na `mensagem` que a requisição foi emitida (**não peça confirmação novamente quando já tiver preenchido `itens`, nem mostre o ID no texto**).
   - Se todos os produtos da categoria pedida custarem acima do teto do usuário, **não emita a requisição (`itens: []`)**, explique que o valor excede o orçamento e informe o preço da opção mais próxima.
 
 - **[CATEGORIA 3: SAUDAÇÃO OU PEDIDO INCOMPLETO]**
@@ -51,36 +51,17 @@ Analise a mensagem do usuário junto com o histórico da conversa e classifique 
 
 ### 2. Regras de Execução, Formatação e Resiliência
 - **Idioma e Moeda:** Responda **100% em português do Brasil (pt-BR)**, sem frases em inglês. Apresente valores em **Dólares (US$)**.
-- **Busca no MCP:** Na ferramenta `buscar_produtos`, passe o termo sempre em **inglês e no singular** (ex: `laptop`, `phone`, `tablet`, `watch`, `shirt`, `chair`).
+- **Busca no MCP:** Na ferramenta `buscar_produtos`, passe sempre **UMA ÚNICA PALAVRA** em inglês e no singular (ex: `samsung`, `s10`, `iphone`, `laptop`, `phone`, `tablet`, `watch`). **Nunca** passe duas palavras juntas (como `samsung s10` ou `samsung phone`), pois a busca faz match de substring contígua e retorna vazio.
 - **Frete:** Preencha o campo `frete` de cada item traduzindo o `shippingInformation` da API para português (ex: "Envio em 2 semanas", "Envio em 3-5 dias úteis").
-- **Resiliência:** Se as ferramentas MCP retornarem erro ou timeout, informe amigavelmente a instabilidade temporária do catálogo e retorne `itens: []`.
+- **Erros:** Se as ferramentas MCP retornarem erro ou timeout, informe amigavelmente a instabilidade temporária do catálogo e retorne `itens: []`.
 """
-
-
-_agent = None
-
-
-async def obter_agente():
-    """Inicializa o agente e carrega as tools do MCP apenas na primeira execução."""
-    global _agent
-    if _agent is None:
-        # As tools retornadas por list_tools() mantêm a referência ao cliente MCP e continuam funcionais
-        mcp_tools = await MCPAdapter(MCP_SERVER_URL).list_tools()
-        logger.info("Ferramentas MCP carregadas uma única vez: %s", [t.name for t in mcp_tools])
-        _agent = create_agent(
-            model=llm,
-            tools=mcp_tools,
-            system_prompt=SYSTEM_PROMPT,
-            response_format=DecisaoAgente,
-        )
-    return _agent
 
 
 async def executar_agente(
     mensagem_usuario: str,
     historico: Optional[List[MensagemHistorico]] = None,
 ) -> DecisaoAgente:
-    """Executa o agente em cache e retorna a decisão estruturada."""
+    """Conecta ao servidor MCP com MCPAdapter, cria o agente e retorna a decisão estruturada."""
     logger.info("[USUÁRIO -> AGENTE] Mensagem recebida: %s", mensagem_usuario)
 
     mensagens_contexto = [
@@ -88,8 +69,18 @@ async def executar_agente(
     ]
     mensagens_contexto.append({"role": "user", "content": mensagem_usuario})
 
-    agent = await obter_agente()
-    resultado = await agent.ainvoke({"messages": mensagens_contexto})
+    async with MCPAdapter(MCP_SERVER_URL) as adapter:
+        mcp_tools = await adapter.list_tools()
+
+        # response_format obriga o agente a devolver um objeto Pydantic (DecisaoAgente) ao final do loop
+        agent = create_agent(
+            model=llm,
+            tools=mcp_tools,
+            system_prompt=SYSTEM_PROMPT,
+            response_format=DecisaoAgente,
+        )
+
+        resultado = await agent.ainvoke({"messages": mensagens_contexto})
 
     for msg in resultado.get("messages", []):
         for tc in getattr(msg, "tool_calls", []) or []:
