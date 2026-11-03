@@ -2,6 +2,6 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 psycopg[binary]
-pydantic
 langchain[mcp]
 langchain-openai
+pytest

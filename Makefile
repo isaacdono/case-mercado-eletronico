@@ -10,4 +10,5 @@ logs:
 	docker compose logs -f
 
 test:
-	docker compose exec mcp_server pytest
+	docker compose exec mcp_server pytest -v
+	docker compose exec backend pytest -v

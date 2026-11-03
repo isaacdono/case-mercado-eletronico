@@ -7,14 +7,13 @@ from sqlalchemy import text
 import uvicorn
 
 from app.db.session import Base, engine
+from app.api.requisicoes import router as requisicoes_router
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-from app.api.requisicoes import router as requisicoes_router
 
 
 @asynccontextmanager
