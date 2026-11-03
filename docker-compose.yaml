@@ -2,28 +2,32 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: postgres
-    env_file:
-      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      start_period: 20s # aguarda postgres terminar de iniciar
+      start_period: 60s # aguarda postgres terminar de iniciar
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 15
 
   mcp_server:
     build: ./mcp_server
     container_name: mcp_server
+    environment:
+      - MCP_HOST=${MCP_HOST}
+      - MCP_PORT=${MCP_PORT}
     ports:
       - "${MCP_PORT}:${MCP_PORT}"
     volumes:
-      - ./mcp_server:/app # para hot reload
-    env_file:
-      - .env
+      - ./mcp_server:/app # para hot reload no modo dev
 
   backend:
     build: ./backend
@@ -33,25 +37,31 @@ services:
         condition: service_healthy
       mcp_server:
         condition: service_started
+    environment:
+      - BACKEND_PORT=${BACKEND_PORT}
+      - DATABASE_URL=${DATABASE_URL}
+      - MCP_SERVER_URL=${MCP_SERVER_URL}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL}
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     volumes:
-      - ./backend:/app # para hot reload
-    env_file:
-      - .env
+      - ./backend:/app # para hot reload (omitir em prod)
 
   frontend:
     build: ./frontend
     container_name: frontend
     depends_on:
       - backend
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - VITE_API_URL=${VITE_API_URL}
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}" 
-    volumes: # para hot reload
+    volumes: # para hot reload (omitir em prod)
       - ./frontend:/app
       - /app/node_modules
-    env_file:
-      - .env
 
 volumes:
   postgres_data:

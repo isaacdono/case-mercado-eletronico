@@ -145,6 +145,8 @@ erDiagram
 │   │   ├── schemas/
 │   │   │   └── requisicao.py    # Schemas Pydantic de entrada, decisão e saída
 │   │   └── main.py              # Inicialização FastAPI, CORS e criação de tabelas
+│   ├── tests/
+│   │   └── test_pedidos.py      # Suíte pytest com 5 pedidos de teste do agente
 │   ├── requirements.txt
 │   └── Dockerfile
 │
@@ -181,4 +183,4 @@ erDiagram
 - `make up`: Sobe todos os serviços em background com build (`docker compose up --build -d`).
 - `make down`: Encerra e remove os containers, órfãos e volumes (`docker compose down -v --remove-orphans`).
 - `make logs`: Acompanha os logs integrados em tempo real (`docker compose logs -f`).
-- `make test`: Executa a suíte de testes do `mcp_server` via `pytest` (`docker compose exec mcp_server pytest`).
+- `make test`: Executa as suítes de testes do `mcp_server` e dos 5 pedidos do `backend` via `pytest`.

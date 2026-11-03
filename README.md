@@ -6,28 +6,27 @@ Aplicação desenvolvida para o case técnico de **AI Forward Deployed Engineer 
 
 ## Como Rodar
 
-1. Crie o arquivo `.env` a partir do template e preencha sua `OPENROUTER_API_KEY`:
-   ```bash
-   cp .env.example .env
-   ```
-**OBS**: a chave que recebi no PDF do case não funcionou (erro de limite atingido), criei uma própria e usei um modelo gratuito da OpenRouter (NVIDIA: Nemotron 3 Nano Omni)
+1. Crie o arquivo `.env` a partir do template e preencha sua `OPENROUTER_API_KEY`.
+
+**OBS**: a chave que recebi no PDF do case não funcionou (erro de limite monetário atingido), criei uma própria e usei um modelo gratuito da OpenRouter (nvidia/nemotron-3.5-lightning:free). 
+
 
 
 2. Suba os quatro serviços (`postgres`, `mcp_server`, `backend`, `frontend`):
    ```bash
-   docker compose up --build
-   # ou: make up
+   docker compose up --build -d # ou make up
    ```
+**OBS:** Poder ser que o Postgres demore a iniciar.
 
 3. Acesse:
    - **Chat B2B (Frontend React):** [http://localhost:5173](http://localhost:5173)
    - **API FastAPI (Docs / Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Rodando os Testes do Servidor MCP (sem chave de LLM)
+### Rodando os Testes
 ```bash
-docker compose exec mcp_server pytest
-# ou: make test
+make test
 ```
+**OBS:** Os testes de pedidos consultam a LLM em tempo real; com modelos gratuitos na OpenRouter, alguns casos podem demorar ou falhar por *timeout* (60s).
 
 ---
 
@@ -50,7 +49,8 @@ docker compose exec mcp_server pytest
 ## Uso de IA no Desenvolvimento
 
 Utilizei assistente de IA como **motor principal de escrita de código e debugging**:
-- **Geração de código:** Escrita dos endpoints FastAPI, integração do `langchain[mcp]` (`MCPAdapter` e `create_agent`), construção da interface React/CSS e configuração do Docker Compose.
+- **Geração de código:** Escrita dos endpoints FastAPI, integração do `langchain[mcp]` (`MCPAdapter` e `create_agent`), construção da interface React/CSS, configuração do Docker Compose e dos testes.
 - **Debugging e Refinamento:** Investigação de comportamentos da API DummyJSON (como a busca exigir termos em inglês no singular), ajustes de hot reload/cache do MCP e limpeza de redundâncias/overengineering.
-- **Meu papel:** Direcionamento das escolhas técnicas e de arquitetura, checagem de documentação das tecnologias utilizadas, escrita parcial do MCP Server, revisão do código gerado, definição das regras de negócio/prompt e testes manuais de ponta a ponta.
+- **Meu papel:** Direcionamento das escolhas técnicas e de arquitetura, checagem de documentação das tecnologias utilizadas, escrita parcial do MCP Server, revisão do código gerado, definição das regras de negócio/prompt e testes manuais de ponta a ponta.  
 
+Há um arquivo de melhorias possíveis no projeto em `docs/melhorias.md`, além de outros documentos relevantes.

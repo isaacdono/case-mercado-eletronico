@@ -18,6 +18,7 @@ TIMEOUT_SECONDS = 10.0
 @mcp.tool()
 async def buscar_produtos(termo: str) -> str:
     """Retorna uma lista de produtos relacionados ao termo com ID, título, preço e descrição."""
+
     url = f"{BASE_URL}/search"
     params = {"q": termo}
     
@@ -34,6 +35,7 @@ async def buscar_produtos(termo: str) -> str:
 @mcp.tool()
 async def detalhar_produto(id: int) -> str:
     """Retorna detalhes de um produto, incluindo preço, estoque, especificações e marca."""
+    
     url = f"{BASE_URL}/{id}"
 
     try:
