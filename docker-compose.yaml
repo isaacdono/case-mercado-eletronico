@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      start_period: 20s # aguarda postgres terminar de iniciar
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mcp_server:
+    build: ./mcp_server
+    container_name: mcp_server
+    ports:
+      - "${MCP_PORT}:${MCP_PORT}"
+    volumes:
+      - ./mcp_server:/app # para hot reload
+    env_file:
+      - .env
+
+  backend:
+    build: ./backend
+    container_name: backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mcp_server:
+        condition: service_started
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    volumes:
+      - ./backend:/app # para hot reload
+    env_file:
+      - .env
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}" 
+    volumes: # para hot reload
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
